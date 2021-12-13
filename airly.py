@@ -29,7 +29,7 @@ parser.add_argument('--airly_apikey',
                     )
 parser.add_argument('--airly_url',
                     help='Airly API URL',
-                    default='https://airapi.airly.eu/v1/sensor/measurements'
+                    default='https://airapi.airly.eu/v2/measurements/installation'
                     )
 parser.add_argument('--InfluxDB_host', default='localhost')
 parser.add_argument('--InfluxDB_port', default='8086')
@@ -44,18 +44,21 @@ if args.verbose:
 
 def get_airly(airly_sensorid, airly_apikey, airly_url):
     payload = {
-        'sensorId': airly_sensorid,
+        'installationId': airly_sensorid
+    }
+    headers = {
         'apikey': airly_apikey
     }
     logging.debug('Requesting JSON from ' + airly_url)
-    response = requests.get(airly_url, params=payload)
+    response = requests.get(airly_url, params=payload, headers=headers)
     _airly_json = response.json()
-    _airly_pm1 = math.floor(_airly_json['currentMeasurements']['pm1'])
-    _airly_pm25 = math.floor(_airly_json['currentMeasurements']['pm25'])
-    _airly_pm10 = math.floor(_airly_json['currentMeasurements']['pm10'])
-    _airly_pressure = math.floor(_airly_json['currentMeasurements']['pressure'])
-    _airly_humidity = math.floor(_airly_json['currentMeasurements']['humidity'])
-    _airly_temperature = _airly_json['currentMeasurements']['temperature']
+    logging.debug(_airly_json['current']['values'])
+    _airly_pm1 = _airly_json['current']['values'][0]['value']
+    _airly_pm25 = math.floor(_airly_json['current']['values'][1]['value'])
+    _airly_pm10 = math.floor(_airly_json['current']['values'][2]['value'])
+    _airly_pressure = math.floor(_airly_json['current']['values'][3]['value'])
+    _airly_humidity = math.floor(_airly_json['current']['values'][4]['value'])
+    _airly_temperature = _airly_json['current']['values'][5]['value']
     logging.debug('Received PM1: ' + str(_airly_pm1))
     logging.debug('Received PM2.5: ' + str(_airly_pm25))
     logging.debug('Received PM10: ' + str(_airly_pm10))
